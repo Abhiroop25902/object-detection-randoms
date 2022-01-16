@@ -180,5 +180,5 @@ def run_detector(detector, path):
 
     save_img(image_with_boxes)
 
-
-run_detector(detector, downloaded_image_path)
+if __name__ == '__main__':
+    run_detector(detector, downloaded_image_path)
