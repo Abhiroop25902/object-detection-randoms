@@ -1,5 +1,6 @@
 # For running inference on the TF-Hub module.
 from email.mime import image
+from shutil import register_unpack_format
 import tensorflow as tf
 import tensorflow_hub as hub
 
@@ -29,6 +30,7 @@ import time
 
 
 def download_and_resize_image(url: str, new_width: int = 256, new_height: int = 256) -> str:
+    """downloads and saves the image on a temporary file, return the path of that file"""
     # make a temp file to download and store the images
     _, filename = tempfile.mkstemp(suffix=".jpg")
 
@@ -55,7 +57,17 @@ def download_and_resize_image(url: str, new_width: int = 256, new_height: int = 
     return filename
 
 
-def draw_bounding_box_on_image(image: Image, ymin: float, xmin: float, ymax: float, xmax: float, color: str, font: ImageFont, thickness: int = 4, display_str_list=()):
+def draw_bounding_box_on_image(
+    image: Image,
+    ymin: float,
+    xmin: float,
+    ymax: float,
+    xmax: float,
+    color: str,
+    font: ImageFont,
+    thickness: int = 4,
+    display_str_list=()
+):
     """Adds a bounding box to an image."""
     # draw is an editable image where we can draw stuffs, any changes in draw also gets reflected in the image
     draw = ImageDraw.Draw(image)
@@ -82,7 +94,8 @@ def draw_bounding_box_on_image(image: Image, ymin: float, xmin: float, ymax: flo
     # If the total height of the display strings added to the top of the bounding
     # box exceeds the top of the image, stack the strings below the bounding box
     # instead of above.
-    display_str_heights = [font.getsize(dis_str)[1] for dis_str in display_str_list]
+    display_str_heights = [font.getsize(dis_str)[1]
+                           for dis_str in display_str_list]
     # Each dis_str has a top and bottom margin of 0.05x.
     total_display_str_height = (1 + 2 * 0.05) * sum(display_str_heights)
 
@@ -113,7 +126,8 @@ def draw_bounding_box_on_image(image: Image, ymin: float, xmin: float, ymax: flo
             font=font
         )
 
-        text_bottom -= text_height - 2 * margin # repeat in case of multiple detection model
+        # repeat in case of multiple detection model
+        text_bottom -= text_height - 2 * margin
 
 
 def draw_boxes(image, boxes, class_names, scores, max_boxes=10, min_score=0.1):
@@ -121,7 +135,7 @@ def draw_boxes(image, boxes, class_names, scores, max_boxes=10, min_score=0.1):
     colors = list(ImageColor.colormap.values())
 
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Regular.ttf",
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
                                   25)
     except IOError:
         print("Font not found, using default font.")
@@ -137,36 +151,19 @@ def draw_boxes(image, boxes, class_names, scores, max_boxes=10, min_score=0.1):
             color = colors[hash(class_names[i]) % len(colors)]
             image_pil = Image.fromarray(np.uint8(image)).convert("RGB")
             draw_bounding_box_on_image(
-                image_pil,
-                ymin,
-                xmin,
-                ymax,
-                xmax,
-                color,
-                font,
-                display_str_list=[display_str])
+                image_pil, ymin, xmin, ymax, xmax, color, font, display_str_list=[display_str]
+            )
             np.copyto(image, np.array(image_pil))
     return image
 
 
-# By Heiko Gorski, Source: https://commons.wikimedia.org/wiki/File:Naxos_Taverna.jpg
-image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Naxos_Taverna.jpg/800px-Naxos_Taverna.jpg"
-downloaded_image_path = download_and_resize_image(image_url, 1280, 856)
-
-# Download and load the model
-module_handle = "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1"
-detector = hub.load(module_handle).signatures['default']
-
-
-def load_img(path):
+def load_img(path:str):
     img = tf.io.read_file(path)
     img = tf.image.decode_jpeg(img, channels=3)
     return img
 
 
 def save_img(image, outputFileName='./output.jpg'):
-    fig = plt.figure(figsize=(20, 15))
-    plt.grid(False)
     plt.imsave(outputFileName, image)
     print(f"Images is saved as {outputFileName}")
 
@@ -174,17 +171,17 @@ def save_img(image, outputFileName='./output.jpg'):
 def run_detector(detector, path):
     img = load_img(path)
 
-    converted_img = tf.image.convert_image_dtype(img, tf.float32)[
-        tf.newaxis, ...]
+    converted_img = tf.image.convert_image_dtype(img, tf.float32)[tf.newaxis, ...]
 
     start_time = time.time()
     result = detector(converted_img)
     end_time = time.time()
 
     result = {
-        key: value.numpy() for key,
-        value in result.items()
+        key: value.numpy() for key, value in result.items()
     }
+
+    print(result.keys())
 
     print("Found %d objects." % len(result["detection_scores"]))
     print(f"Inference time: {end_time-start_time} s")
@@ -198,6 +195,14 @@ def run_detector(detector, path):
 
     save_img(image_with_boxes)
 
+
+# By Heiko Gorski, Source: https://commons.wikimedia.org/wiki/File:Naxos_Taverna.jpg
+image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Naxos_Taverna.jpg/800px-Naxos_Taverna.jpg"
+downloaded_image_path = download_and_resize_image(image_url, 1280, 856)
+
+# Download and load the model
+module_handle = "1https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/"
+detector = hub.load(module_handle).signatures['default']
 
 if __name__ == '__main__':
     run_detector(detector, downloaded_image_path)
