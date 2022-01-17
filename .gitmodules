@@ -1,0 +1,3 @@
+[submodule "coco-labels"]
+	path = coco-labels
+	url = https://github.com/amikelive/coco-labels
