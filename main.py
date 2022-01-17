@@ -1,4 +1,5 @@
 # For running inference on the TF-Hub module.
+from email.mime import image
 import tensorflow as tf
 import tensorflow_hub as hub
 
@@ -27,26 +28,30 @@ import time
 # print("The following GPU devices are available: %s" % tf.test.gpu_device_name())
 
 
-def display_image(image):
-    fig = plt.figure(figsize=(20, 15))
-    plt.grid(False)
-    plt.imshow(image)
-
-
-def download_and_resize_image(url, new_width=256, new_height=256, display=False):
+def download_and_resize_image(url: str, new_width: int = 256, new_height: int = 256):
+    # make a temp file to download and store the images
     _, filename = tempfile.mkstemp(suffix=".jpg")
+
+    # download the image
     response = urlopen(url)
     image_data = response.read()
     image_data = BytesIO(image_data)
+    # image is now 0 and 1 data
+    # convert image to matrix form
     pil_image = Image.open(image_data)
+    # resize the image
     pil_image = ImageOps.fit(
-        pil_image, (new_width, new_height), Image.ANTIALIAS)
+        pil_image, (new_width, new_height),
+        Image.ANTIALIAS
+    )
+
+    #if image is in some different format, convert to rgb
     pil_image_rgb = pil_image.convert("RGB")
+
+    #save file to the temporary file made
     pil_image_rgb.save(filename, format="JPEG", quality=90)
     print("Image downloaded to %s." % filename)
 
-    if display:
-        display_image(pil_image)
     return filename
 
 
@@ -136,7 +141,7 @@ def draw_boxes(image, boxes, class_names, scores, max_boxes=10, min_score=0.1):
 
 # By Heiko Gorski, Source: https://commons.wikimedia.org/wiki/File:Naxos_Taverna.jpg
 image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Naxos_Taverna.jpg/800px-Naxos_Taverna.jpg"
-downloaded_image_path = download_and_resize_image(image_url, 1280, 856, True)
+downloaded_image_path = download_and_resize_image(image_url, 1280, 856)
 
 # Download and load the model
 module_handle = "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1"
@@ -148,11 +153,13 @@ def load_img(path):
     img = tf.image.decode_jpeg(img, channels=3)
     return img
 
-def save_img(image, outputFileName = './output.jpg'):
+
+def save_img(image, outputFileName='./output.jpg'):
     fig = plt.figure(figsize=(20, 15))
     plt.grid(False)
     plt.imsave(outputFileName, image)
     print(f"Images is saved as {outputFileName}")
+
 
 def run_detector(detector, path):
     img = load_img(path)
@@ -165,7 +172,7 @@ def run_detector(detector, path):
     end_time = time.time()
 
     result = {
-        key: value.numpy() for key, 
+        key: value.numpy() for key,
         value in result.items()
     }
 
@@ -174,11 +181,12 @@ def run_detector(detector, path):
 
     image_with_boxes = draw_boxes(
         img.numpy(), result["detection_boxes"],
-        result["detection_class_entities"], 
+        result["detection_class_entities"],
         result["detection_scores"]
     )
 
     save_img(image_with_boxes)
+
 
 if __name__ == '__main__':
     run_detector(detector, downloaded_image_path)
