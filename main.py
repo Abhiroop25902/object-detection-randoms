@@ -28,7 +28,7 @@ import time
 # print("The following GPU devices are available: %s" % tf.test.gpu_device_name())
 
 
-def download_and_resize_image(url: str, new_width: int = 256, new_height: int = 256):
+def download_and_resize_image(url: str, new_width: int = 256, new_height: int = 256) -> str:
     # make a temp file to download and store the images
     _, filename = tempfile.mkstemp(suffix=".jpg")
 
@@ -45,29 +45,23 @@ def download_and_resize_image(url: str, new_width: int = 256, new_height: int = 
         Image.ANTIALIAS
     )
 
-    #if image is in some different format, convert to rgb
+    # if image is in some different format, convert to rgb
     pil_image_rgb = pil_image.convert("RGB")
 
-    #save file to the temporary file made
+    # save file to the temporary file made
     pil_image_rgb.save(filename, format="JPEG", quality=90)
     print("Image downloaded to %s." % filename)
 
     return filename
 
 
-def draw_bounding_box_on_image(image,
-                               ymin,
-                               xmin,
-                               ymax,
-                               xmax,
-                               color,
-                               font,
-                               thickness=4,
-                               display_str_list=()
-                               ):
+def draw_bounding_box_on_image(image: Image, ymin: float, xmin: float, ymax: float, xmax: float, color: str, font: ImageFont, thickness: int = 4, display_str_list=()):
     """Adds a bounding box to an image."""
+    # draw is an editable image where we can draw stuffs, any changes in draw also gets reflected in the image
     draw = ImageDraw.Draw(image)
     im_width, im_height = image.size
+
+    # xmin, xmax, ymin, ymax -> values between 0 and 1 according to whole image resolution
     (left, right, top, bottom) = (
         xmin * im_width,
         xmax * im_width,
@@ -75,35 +69,51 @@ def draw_bounding_box_on_image(image,
         ymax * im_height
     )
 
+    # draw rectangle in the bounding box
     draw.line(
+        # top-left to bottom-left  to bottom-right to top-right to top-left -> rectangle
         [(left, top), (left, bottom), (right, bottom), (right, top), (left, top)],
         width=thickness,
         fill=color
     )
 
+    # display_str_list is the list of possible objects detected by the object detection model
+
     # If the total height of the display strings added to the top of the bounding
     # box exceeds the top of the image, stack the strings below the bounding box
     # instead of above.
-    display_str_heights = [font.getsize(ds)[1] for ds in display_str_list]
-    # Each display_str has a top and bottom margin of 0.05x.
+    display_str_heights = [font.getsize(dis_str)[1] for dis_str in display_str_list]
+    # Each dis_str has a top and bottom margin of 0.05x.
     total_display_str_height = (1 + 2 * 0.05) * sum(display_str_heights)
 
     if top > total_display_str_height:
         text_bottom = top
     else:
         text_bottom = top + total_display_str_height
+
     # Reverse list and print from bottom to top.
     for display_str in display_str_list[::-1]:
         text_width, text_height = font.getsize(display_str)
         margin = np.ceil(0.05 * text_height)
-        draw.rectangle([(left, text_bottom - text_height - 2 * margin),
-                        (left + text_width, text_bottom)],
-                       fill=color)
-        draw.text((left + margin, text_bottom - text_height - margin),
-                  display_str,
-                  fill="black",
-                  font=font)
-        text_bottom -= text_height - 2 * margin
+
+        # generate background for the text
+        draw.rectangle(
+            [
+                (left, text_bottom - text_height - 2 * margin),  # top left
+                (left + text_width, text_bottom)  # bottom right
+            ],
+            fill=color
+        )
+
+        # draw text
+        draw.text(
+            (left + margin, text_bottom - text_height - margin),  # bottom left
+            display_str,
+            fill="black",
+            font=font
+        )
+
+        text_bottom -= text_height - 2 * margin # repeat in case of multiple detection model
 
 
 def draw_boxes(image, boxes, class_names, scores, max_boxes=10, min_score=0.1):
@@ -177,10 +187,11 @@ def run_detector(detector, path):
     }
 
     print("Found %d objects." % len(result["detection_scores"]))
-    print("Inference time: ", end_time-start_time)
+    print(f"Inference time: {end_time-start_time} s")
 
     image_with_boxes = draw_boxes(
-        img.numpy(), result["detection_boxes"],
+        img.numpy(),
+        result["detection_boxes"],
         result["detection_class_entities"],
         result["detection_scores"]
     )
