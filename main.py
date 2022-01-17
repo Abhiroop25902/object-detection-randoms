@@ -28,6 +28,27 @@ import time
 # # Check available GPU devices.
 # print("The following GPU devices are available: %s" % tf.test.gpu_device_name())
 
+def load_img(path:str):
+    img = tf.io.read_file(path)
+    img = tf.image.decode_jpeg(img, channels=3)
+    return img
+
+
+def save_img(image, outputFileName='./output.jpg'):
+    plt.imsave(outputFileName, image)
+    print(f"Images is saved as {outputFileName}")
+
+
+def parse_coco_labels(filename = './coco_labels.txt'):
+    coco_dict = {}
+    for line in open(filename, 'r').readlines():
+        line = line.rstrip('\n')
+        phrases = line.split(',')
+        key = int(phrases[0].split(':')[1])
+        value = phrases[1].split(':')[1]
+        coco_dict[key] = value
+
+    return coco_dict
 
 def download_and_resize_image(url: str, new_width: int = 256, new_height: int = 256) -> str:
     """downloads and saves the image on a temporary file, return the path of that file"""
@@ -71,15 +92,11 @@ def draw_bounding_box_on_image(
     """Adds a bounding box to an image."""
     # draw is an editable image where we can draw stuffs, any changes in draw also gets reflected in the image
     draw = ImageDraw.Draw(image)
-    im_width, im_height = image.size
+    # im_width, im_height = image.size
 
+    
     # xmin, xmax, ymin, ymax -> values between 0 and 1 according to whole image resolution
-    (left, right, top, bottom) = (
-        xmin * im_width,
-        xmax * im_width,
-        ymin * im_height,
-        ymax * im_height
-    )
+    (left, right, top, bottom) = tuple(map(lambda val: round(float(val)), [xmin, xmax, ymin, ymax]))
 
     # draw rectangle in the bounding box
     draw.line(
@@ -132,23 +149,23 @@ def draw_bounding_box_on_image(
 
 def draw_boxes(image, boxes, class_names, scores, max_boxes=10, min_score=0.1):
     """Overlay labeled boxes on an image with formatted scores and label names."""
+
     colors = list(ImageColor.colormap.values())
 
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-                                  25)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",25)
     except IOError:
         print("Font not found, using default font.")
         font = ImageFont.load_default()
 
+    coco_label_dict = parse_coco_labels()
+
     for i in range(min(boxes.shape[0], max_boxes)):
         if scores[i] >= min_score:
             ymin, xmin, ymax, xmax = tuple(boxes[i])
-            display_str = "{}: {}%".format(
-                class_names[i].decode("ascii"),
-                int(100 * scores[i])
-            )
-            color = colors[hash(class_names[i]) % len(colors)]
+            object_str = coco_label_dict[class_names[i]] 
+            display_str = f"{object_str}: {int(100 * scores[i])}%"
+            color = colors[hash(object_str) % len(colors)]
             image_pil = Image.fromarray(np.uint8(image)).convert("RGB")
             draw_bounding_box_on_image(
                 image_pil, ymin, xmin, ymax, xmax, color, font, display_str_list=[display_str]
@@ -157,52 +174,42 @@ def draw_boxes(image, boxes, class_names, scores, max_boxes=10, min_score=0.1):
     return image
 
 
-def load_img(path:str):
-    img = tf.io.read_file(path)
-    img = tf.image.decode_jpeg(img, channels=3)
-    return img
-
-
-def save_img(image, outputFileName='./output.jpg'):
-    plt.imsave(outputFileName, image)
-    print(f"Images is saved as {outputFileName}")
-
-
 def run_detector(detector, path):
     img = load_img(path)
 
-    converted_img = tf.image.convert_image_dtype(img, tf.float32)[tf.newaxis, ...]
+    converted_img = tf.image.convert_image_dtype(img, tf.uint8)[tf.newaxis, ...]
 
     start_time = time.time()
-    result = detector(converted_img)
+    boxes, scores, classes, num_detections = detector(converted_img)
     end_time = time.time()
 
     result = {
-        key: value.numpy() for key, value in result.items()
+        'detection_boxes': boxes[0],
+        'detection_scores': scores[0],
+        'detection_classes': list(map(int, classes[0]))
     }
 
     print(result.keys())
 
-    print("Found %d objects." % len(result["detection_scores"]))
+    print(f"Found {int(num_detections)} objects.")
     print(f"Inference time: {end_time-start_time} s")
 
     image_with_boxes = draw_boxes(
         img.numpy(),
         result["detection_boxes"],
-        result["detection_class_entities"],
+        result["detection_classes"],
         result["detection_scores"]
     )
 
     save_img(image_with_boxes)
-
 
 # By Heiko Gorski, Source: https://commons.wikimedia.org/wiki/File:Naxos_Taverna.jpg
 image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Naxos_Taverna.jpg/800px-Naxos_Taverna.jpg"
 downloaded_image_path = download_and_resize_image(image_url, 1280, 856)
 
 # Download and load the model
-module_handle = "1https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/"
-detector = hub.load(module_handle).signatures['default']
+module_handle = "https://tfhub.dev/tensorflow/efficientdet/lite0/detection/1"
+detector = hub.load(module_handle)
 
 if __name__ == '__main__':
     run_detector(detector, downloaded_image_path)
