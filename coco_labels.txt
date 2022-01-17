@@ -1,3 +1,4 @@
+id:1, category:person, super category:animal 
 id:2, category:bicycle, super category:vehicle
 id:3, category:car, super category:vehicle
 id:4, category:motorcycle, super category:vehicle
