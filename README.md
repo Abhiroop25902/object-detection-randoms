@@ -1,7 +1,4 @@
 # object-detection-randoms
-
-Used [coco-labels](https://github.com/amikelive/coco-labels) to generate [coco-labels.txt](coco_labels.txt)
-
 ## How to run
 ```
 pip install -r requirements.txt
@@ -14,4 +11,8 @@ If you have proper dependencies installed to use CUDA, go to [`./core/objectDete
 # in ./core/objectDetector.py
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 ```
+
+## Special Thanks
+
+1. Special Thanks to [coco-labels](https://github.com/amikelive/coco-labels), I used this repository to generate [coco-labels.txt](coco_labels.txt)
 
