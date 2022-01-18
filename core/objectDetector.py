@@ -10,7 +10,7 @@ import os
 
 MODEL_HANDLE = "https://tfhub.dev/tensorflow/efficientdet/lite0/detection/1"
 
-# NOTE: uncomment this line to make the GPU invisible to tensorflow
+# NOTE: comment this line to make the CUDA GPU (if proper dependencies are installed) visible to tensorflow
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
