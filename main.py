@@ -13,10 +13,10 @@ if __name__ == '__main__':
     result = detector.run_detector(img)
 
     image_with_boxes = draw_boxes(
-            img.numpy(),
-            result["detection_boxes"],
-            result["detection_classes"],
-            result["detection_scores"]
-        )
+        img.numpy(),
+        result["detection_boxes"],
+        result["detection_classes"],
+        result["detection_scores"]
+    )
 
     save_img(image_with_boxes)

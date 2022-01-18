@@ -48,7 +48,7 @@ class Detector:
 
 
 if __name__ == "__main__":
-    #Print Tensorflow version
+    # Print Tensorflow version
     print(tf.__version__)
 
     if tf.test.gpu_device_name():
