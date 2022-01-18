@@ -5,11 +5,16 @@ import tensorflow_hub as hub
 # for calulating time per processing
 import time
 
+#for setting enviornment variables
+import os
+
 from .imageDrawer import draw_boxes
 from .imageUtils import save_img
 
 MODEL_HANDLE = "https://tfhub.dev/tensorflow/efficientdet/lite0/detection/1"
 
+# NOTE: uncomment this line to make the GPU invisible to tensorflow
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 class Detector:
     """Class wrapper for running object detector model inferences"""
@@ -46,3 +51,13 @@ class Detector:
         )
 
         save_img(image_with_boxes)
+
+
+if __name__ == "__main__":
+    # # Print Tensorflow version
+    print(tf.__version__)
+
+    if tf.test.gpu_device_name():
+        print('GPU found')
+    else:
+        print("No GPU found")
