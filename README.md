@@ -1,10 +1,20 @@
 # object-detection-randoms
 ## How to run
-```
-pip install -r requirements.txt
-python3 main.py
-```
+1. install dependencies
+    ```
+    pip install -r requirements.txt
+    ```
+2. 1. To run Image Detection
+        ```
+        python3 imageDetection.py
+        ```
+    2. To run Video Detection
+        ```
+        python3 videoDetection.py
+        ```
 
+
+## Notes
 If you have proper dependencies installed to use CUDA, go to [`./core/objectDetector.py`](core/objectDetector.py) and comment line 13
 
 ```python
