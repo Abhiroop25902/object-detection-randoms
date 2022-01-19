@@ -9,6 +9,14 @@ import urllib
 import numpy as np
 
 
+def show_image(image, window_name='image'):
+    '''shows the image in a new window and waits for the user to close (or for wait_duration ms if provided)'''
+    cv2.imshow(window_name, image)
+    # waits for user to press any key
+    # (this is necessary to avoid Python kernel form crashing)
+    cv2.waitKey(0)
+
+
 def load_img(path: str):
     bgr_img = cv2.imread(path)
     # NOTE: cv2.imread reads in BGR format, so we need to change it to RGB
