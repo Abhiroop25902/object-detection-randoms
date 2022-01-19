@@ -10,17 +10,17 @@ import numpy as np
 
 
 def load_img(path: str):
-    img = cv2.imread(path)
+    bgr_img = cv2.imread(path)
     # NOTE: cv2.imread reads in BGR format, so we need to change it to RGB
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return img
+    rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
+    return rgb_img
 
 
-def save_img(img, outputFileName='./output.jpg'):
+def save_img(rgb_img, outputFileName='./output.jpg'):
     # NOTE: img saved will be read as BRG format, we changed it to RGB in
     # load_img, so we need to convert RGB to BRG
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    cv2.imwrite(outputFileName, img)
+    bgr_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
+    cv2.imwrite(outputFileName, bgr_img)
     print(f"Images is saved as {outputFileName}")
 
 
