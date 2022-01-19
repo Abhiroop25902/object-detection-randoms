@@ -2,9 +2,6 @@ import tensorflow as tf
 # For running inference on the TF-Hub module.
 import tensorflow_hub as hub
 
-# for calulating time per processing
-import time
-
 # for setting enviornment variables
 import os
 
@@ -33,18 +30,13 @@ class Detector:
             img, tf.uint8
         )[tf.newaxis, ...]
 
-        start_time = time.time()
         boxes, scores, classes, num_detections = self.detector(converted_img)
-        end_time = time.time()
 
         result = {
             'detection_boxes': boxes[0],
             'detection_scores': scores[0],
             'detection_classes': list(map(int, classes[0]))
         }
-
-        print(f"Found {int(num_detections)} objects.")
-        print(f"Inference time: {end_time-start_time} s")
 
         return result
 
