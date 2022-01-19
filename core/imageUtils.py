@@ -9,12 +9,24 @@ import urllib
 import numpy as np
 
 
-def show_image(image, window_name='image'):
-    '''shows the image in a new window and waits for the user to close (or for wait_duration ms if provided)'''
-    cv2.imshow(window_name, image)
-    # waits for user to press any key
-    # (this is necessary to avoid Python kernel form crashing)
-    cv2.waitKey(0)
+def show_image(img, window_name='image'):
+    '''
+    shows the image in a new window and waits for the user to close
+    (or for wait_duration ms if provided)
+    '''
+    # cv2.namedWindow("image", cv2.WINDOW_KEEPRATIO)
+    cv2.imshow("image", img)
+
+    wait_time = 1000
+    # while the 'image' named window is visible
+    while cv2.getWindowProperty('image', cv2.WND_PROP_VISIBLE) >= 1:
+        # wait for wait_time
+        keyCode = cv2.waitKey(wait_time)
+        # if in the waiting duration, someone pressed q
+        if (keyCode & 0xFF) == ord("q"):
+            # destroy all windows
+            cv2.destroyAllWindows()
+            break
 
 
 def load_img(path: str):
