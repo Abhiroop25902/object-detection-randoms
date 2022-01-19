@@ -10,7 +10,8 @@ import os
 
 MODEL_HANDLE = "https://tfhub.dev/tensorflow/efficientdet/lite0/detection/1"
 
-# NOTE: comment this line to make the CUDA GPU (if proper dependencies are installed) visible to tensorflow
+# NOTE: comment this line to make the CUDA GPU
+# (if proper dependencies are installed) visible to tensorflow
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
@@ -23,13 +24,14 @@ class Detector:
 
     def run_detector(self, img):
         """
-        Run detector algorithm and returns a dictionary with keys 
-        "detection_boxes", "detection_classes" and "detection_scores" 
+        Run detector algorithm and returns a dictionary with keys
+        "detection_boxes", "detection_classes" and "detection_scores"
         """
 
         # convert the image
-        converted_img = tf.image.convert_image_dtype(img, tf.uint8)[
-            tf.newaxis, ...]
+        converted_img = tf.image.convert_image_dtype(
+            img, tf.uint8
+        )[tf.newaxis, ...]
 
         start_time = time.time()
         boxes, scores, classes, num_detections = self.detector(converted_img)

@@ -21,27 +21,39 @@ def draw_bounding_box_on_image(
     display_str: str = "",
     thickness: int = 4
 ):
-    """Adds a bounding box to an image. caling this function changes the passed image itself"""
+    """
+    Adds a bounding box to an image. caling this function
+    changes the passed image itself
+    """
 
-    # draw is an editable image where we can draw stuffs, any changes in draw also gets reflected in the image
+    # draw is an editable image where we can draw stuffs, any changes in
+    # draw also gets reflected in the image
     draw = ImageDraw.Draw(image)
 
-    # xmin, xmax, ymin, ymax are float values depicting pixels of the image, so rounding them to int
+    # xmin, xmax, ymin, ymax are float values depicting pixels of the image,
+    # so rounding them to int
     (left, right, top, bottom) = tuple(
         map(lambda val: round(float(val)), [xmin, xmax, ymin, ymax])
     )
 
     # draw rectangle in the bounding box
     draw.line(
-        # top-left to bottom-left  to bottom-right to top-right to top-left -> rectangle
-        [(left, top), (left, bottom), (right, bottom), (right, top), (left, top)],
+        # top-left to bottom-left  to bottom-right to
+        # top-right to top-left -> rectangle
+        [
+            (left, top),
+            (left, bottom),
+            (right, bottom),
+            (right, top),
+            (left, top)
+        ],
         width=thickness,
         fill=color
     )
 
-    # If the total height of the display strings added to the top of the bounding
-    # box exceeds the top of the image, stack the strings below the bounding box
-    # instead of above.
+    # If the total height of the display strings added to the top of
+    # the bounding box exceeds the top of the image, stack the strings
+    # below the bounding box instead of above.
     text_width, text_height = font.getsize(display_str)  # 0th element is width
     # display_str has a top and bottom margin of 0.05x.
     margin = np.ceil(0.05 * text_height)
@@ -70,19 +82,27 @@ def draw_bounding_box_on_image(
     )
 
 
-def draw_boxes(image, boxes, class_labels, scores, max_boxes=20, min_score=0.1):
-    """Overlay labeled boxes on an image with formatted scores and label names."""
+def draw_boxes(
+    image,
+    boxes,
+    class_labels,
+    scores,
+    max_boxes=20,
+    min_score=0.1
+):
+    """
+    Overlay labeled boxes on an image with formatted scores and label names.
+    """
 
     colors = list(ImageColor.colormap.values())
 
     try:
         font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 25
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 15
         )
     except IOError:
         print("Font not found, using default font.")
         font = ImageFont.load_default()
-
     # for converting cocoLabel to object names
     cocoLabelName = CocoLabelName()
 
