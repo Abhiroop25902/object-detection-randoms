@@ -54,7 +54,9 @@ def draw_bounding_box_on_image(
     # If the total height of the display strings added to the top of
     # the bounding box exceeds the top of the image, stack the strings
     # below the bounding box instead of above.
-    text_width, text_height = font.getsize(display_str)  # 0th element is width
+    strLeft, strTop, strRight, strBottom = font.getbbox(display_str)
+    text_width = strRight - strLeft
+    text_height = strBottom - strTop
     # display_str has a top and bottom margin of 0.05x.
     margin = np.ceil(0.05 * text_height)
     total_display_str_height = text_height + 2*margin
